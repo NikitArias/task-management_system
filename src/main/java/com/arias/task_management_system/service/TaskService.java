@@ -1,45 +1,22 @@
 package com.arias.task_management_system.service;
 
-import com.arias.task_management_system.Priority;
 import com.arias.task_management_system.Status;
 import com.arias.task_management_system.Task;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 public class TaskService {
-    private final Map<Long, Task> tasksMap = Map.of(
-            1L, new Task(
-                    1L,
-                    1L,
-                    1L,
-                    Status.CREATED,
-                    LocalDateTime.now(),
-                    LocalDate.now().plusDays(2),
-                    Priority.MEDIUM),
-            2L, new Task(
-                    2L,
-                    2L,
-                    2L,
-                    Status.IN_PROGRESS,
-                    LocalDateTime.now(),
-                    LocalDate.now().plusDays(1),
-                    Priority.HIGH),
-            3L, new Task(
-                    3L,
-                    3L,
-                    3L,
-                    Status.IN_PROGRESS,
-                    LocalDateTime.now(),
-                    LocalDate.now().plusDays(5),
-                    Priority.LOW)
-    );
+    private final Map<Long, Task> tasksMap;
+
+    private final AtomicLong idCounter;
+
+    public TaskService() {
+        this.tasksMap = new HashMap<>();
+        this.idCounter = new AtomicLong();
+    }
 
     public Task getTaskById(Long id) {
         if (!tasksMap.containsKey(id)) {
@@ -50,5 +27,111 @@ public class TaskService {
 
     public List<Task> getAllTasks() {
         return new ArrayList<>(tasksMap.values());
+    }
+
+    public Task createTask(Task task) {
+        if (task.id() != null) {
+            throw new IllegalArgumentException("Id should be empty");
+        }
+        if (task.status() != null) {
+            throw new IllegalArgumentException("Status should be empty");
+        }
+        Task newTask = new Task(
+                idCounter.incrementAndGet(),
+                task.creatorId(),
+                task.assignedUserId(),
+                Status.CREATED,
+                task.createDateTime(),
+                task.deadlineDate(),
+                task.priority()
+        );
+        tasksMap.put(newTask.id(), newTask);
+        return newTask;
+    }
+
+    public Task updateTask(Long id, Task taskToUpdate) {
+        if (!tasksMap.containsKey(id)) {
+            throw new NoSuchElementException("Task with id " + id + " not found");
+        }
+        Task task = tasksMap.get(id);
+        if (task.status() == Status.DONE) {
+            throw new IllegalStateException("Cannot modify task: status is " + task.status());
+        }
+        Task updatedTask = new Task(
+                task.id(),
+                taskToUpdate.creatorId(),
+                taskToUpdate.assignedUserId(),
+                task.status(),
+                taskToUpdate.createDateTime(),
+                taskToUpdate.deadlineDate(),
+                taskToUpdate.priority()
+        );
+        tasksMap.put(id, updatedTask);
+        return updatedTask;
+    }
+
+    public void deleteTask(Long id) {
+        if (!tasksMap.containsKey(id)) {
+            throw new NoSuchElementException("Task with id " + id + " not found");
+        }
+        tasksMap.remove(id);
+    }
+
+    public Task rollbackTask(Long id) {
+        if (!tasksMap.containsKey(id)) {
+            throw new NoSuchElementException("Task with id " + id + " not found");
+        }
+        Task task = tasksMap.get(id);
+        if (task.status() != Status.DONE) {
+            throw new IllegalStateException("Cannot rollback task: status is " + task.status());
+        }
+        Task rollbackTask = new Task(
+          task.id(),
+          task.creatorId(),
+          task.assignedUserId(),
+          Status.IN_PROGRESS,
+          task.createDateTime(),
+          task.deadlineDate(),
+          task.priority()
+        );
+        tasksMap.put(id, rollbackTask);
+
+        return rollbackTask;
+    }
+
+    public Task changeStatus(Long id) {
+        if (!tasksMap.containsKey(id)) {
+            throw new NoSuchElementException("Task with id " + id + " not found");
+        }
+        Task task = tasksMap.get(id);
+        if (task.status() == Status.DONE) {
+            throw new IllegalStateException("Cannot change status of task: status is " + task.status());
+        }
+        if (task.status() == Status.IN_PROGRESS) {
+            Task updateStatusTask = new Task(
+                    task.id(),
+                    task.creatorId(),
+                    task.assignedUserId(),
+                    Status.DONE,
+                    task.createDateTime(),
+                    task.deadlineDate(),
+                    task.priority()
+            );
+            tasksMap.put(id, updateStatusTask);
+            return updateStatusTask;
+        } else if (task.status() == Status.CREATED) {
+            Task updateStatusTask = new Task(
+                    task.id(),
+                    task.creatorId(),
+                    task.assignedUserId(),
+                    Status.IN_PROGRESS,
+                    task.createDateTime(),
+                    task.deadlineDate(),
+                    task.priority()
+            );
+            tasksMap.put(id, updateStatusTask);
+            return updateStatusTask;
+        }
+        return null;
     }
 }
