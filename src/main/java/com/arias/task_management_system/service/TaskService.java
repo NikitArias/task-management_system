@@ -13,13 +13,9 @@ import java.util.*;
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
-//    private final Map<Long, Task> tasksMap;
-//    private final AtomicLong idCounter;
 
     public TaskService(TaskRepository taskRepository) {
         this.taskRepository = taskRepository;
-//        this.tasksMap = new HashMap<>();
-//        this.idCounter = new AtomicLong();
     }
 
     public Task getTaskById(Long id) {
