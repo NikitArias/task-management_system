@@ -77,26 +77,13 @@ public class TaskController {
         }
     }
 
-    @PostMapping("{id}/changeStatus")
-    public ResponseEntity<Task> changeTaskStatus(@PathVariable Long id) {
-        log.info("Called method changeTaskStatus");
+    @PostMapping("/{id}/start")
+    public ResponseEntity<Task> startTask(@PathVariable Long id) {
+        log.info("Called method startTask with id {}", id);
         try {
-            Task task = taskService.changeStatus(id);
-            log.info("Ending method changeTaskStatus");
+            Task task = taskService.startTask(id);
+            log.info("Ending method startTask");
             return ResponseEntity.status(HttpStatus.OK).body(task);
-        } catch (NoSuchElementException e) {
-            log.info("No task found with id {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
-
-    @PostMapping("{id}/rollback")
-    public ResponseEntity<Task> rollbackTask(@PathVariable Long id) {
-        log.info("Called method rollbackTask");
-        try {
-            Task task = taskService.rollbackTask(id);
-            log.info("Ending method rollbackTask");
-            return ResponseEntity.status(200).body(task);
         } catch (NoSuchElementException e) {
             log.info("No task found with id {}", id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
