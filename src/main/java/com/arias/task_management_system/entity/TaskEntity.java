@@ -16,23 +16,26 @@ public class TaskEntity {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "creator_id")
+    @Column(name = "creator_id", nullable = false)
     private Long creatorId;
 
-    @Column(name = "assigned_user_id")
+    @Column(name = "assigned_user_id", nullable = false)
     private Long assignedUserId;
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @Column(name = "create_date_time")
+    @Column(name = "create_date_time", nullable = false)
     private LocalDateTime createDateTime;
 
-    @Column(name = "deadline_date")
+    @Column(name = "deadline_date", nullable = false)
     private LocalDate deadlineDate;
 
-    @Column(name = "priority")
+    @Column(name = "done_date_time")
+    private LocalDateTime doneDateTime;
+
+    @Column(name = "priority", nullable = false)
     @Enumerated(EnumType.STRING)
     private Priority priority;
 
@@ -45,6 +48,7 @@ public class TaskEntity {
             Status status,
             LocalDateTime createDateTime,
             LocalDate deadlineDate,
+            LocalDateTime doneDateTime,
             Priority priority
     ) {
         this.id = id;
@@ -53,6 +57,7 @@ public class TaskEntity {
         this.status = status;
         this.createDateTime = createDateTime;
         this.deadlineDate = deadlineDate;
+        this.doneDateTime = doneDateTime;
         this.priority = priority;
     }
 
@@ -110,5 +115,13 @@ public class TaskEntity {
 
     public void setPriority(Priority priority) {
         this.priority = priority;
+    }
+
+    public LocalDateTime getDoneDateTime() {
+        return doneDateTime;
+    }
+
+    public void setDoneDateTime(LocalDateTime doneDateTime) {
+        this.doneDateTime = doneDateTime;
     }
 }

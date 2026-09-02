@@ -2,6 +2,7 @@ package com.arias.task_management_system.controller;
 
 import com.arias.task_management_system.Task;
 import com.arias.task_management_system.service.TaskService;
+import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -9,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @RestController
 @RequestMapping("/tasks")
@@ -31,20 +31,15 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
+    public ResponseEntity<Task> getTaskById(@PathVariable("id") Long id) {
         log.info("Called method get taskById: {}", id);
-        try {
-            Task task = taskService.getTaskById(id);
-            log.info("Ending method get taskById");
-            return ResponseEntity.status(HttpStatus.OK).body(task);
-        } catch (NoSuchElementException e) {
-            log.info("No task found with id {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        Task task = taskService.getTaskById(id);
+        log.info("Ending method get taskById");
+        return ResponseEntity.status(HttpStatus.OK).body(task);
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
+    public ResponseEntity<Task> createTask(@RequestBody @Valid Task task) {
         log.info("Called method createTask");
         Task newTask = taskService.createTask(task);
         log.info("Ending method createTask");
@@ -52,41 +47,34 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task taskToUpdate) {
+    public ResponseEntity<Task> updateTask(@PathVariable("id") Long id, @RequestBody @Valid Task taskToUpdate) {
         log.info("Called method updateTask");
-        try {
-            Task updatedTask = taskService.updateTask(id, taskToUpdate);
-            log.info("Ending method updateTask");
-            return ResponseEntity.status(HttpStatus.OK).body(updatedTask);
-        } catch (NoSuchElementException e) {
-            log.info("No task found with id {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        Task updatedTask = taskService.updateTask(id, taskToUpdate);
+        log.info("Ending method updateTask");
+        return ResponseEntity.status(HttpStatus.OK).body(updatedTask);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Task> deleteTask(@PathVariable Long id) {
+    public ResponseEntity<Task> deleteTask(@PathVariable("id") Long id) {
         log.info("Called method deleteTask");
-        try {
-            taskService.deleteTask(id);
-            log.info("Ending method deleteTask");
-            return ResponseEntity.status(200).build();
-        } catch (NoSuchElementException e) {
-            log.info("No task found with id {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        taskService.deleteTask(id);
+        log.info("Ending method deleteTask");
+        return ResponseEntity.status(200).build();
     }
 
     @PostMapping("/{id}/start")
-    public ResponseEntity<Task> startTask(@PathVariable Long id) {
+    public ResponseEntity<Task> startTask(@PathVariable("id") Long id) {
         log.info("Called method startTask with id {}", id);
-        try {
-            Task task = taskService.startTask(id);
-            log.info("Ending method startTask");
-            return ResponseEntity.status(HttpStatus.OK).body(task);
-        } catch (NoSuchElementException e) {
-            log.info("No task found with id {}", id);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        Task task = taskService.startTask(id);
+        log.info("Ending method startTask");
+        return ResponseEntity.status(HttpStatus.OK).body(task);
+    }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<Task> completeTask(@PathVariable Long id) {
+        log.info("Called method completeTask with id {}", id);
+        Task task = taskService.completeTask(id);
+        log.info("Ending method completeTask");
+        return ResponseEntity.status(HttpStatus.OK).body(task);
     }
 }

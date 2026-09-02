@@ -8,6 +8,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -30,11 +31,8 @@ public class TaskService {
     }
 
     public Task createTask(Task task) {
-        if (task.id() != null) {
-            throw new IllegalArgumentException("Id should be empty");
-        }
-        if (task.status() != null) {
-            throw new IllegalArgumentException("Status should be empty");
+        if (!task.deadlineDate().isAfter(task.createDateTime().toLocalDate())) {
+            throw new IllegalArgumentException("Deadline date should be after create date");
         }
         TaskEntity newTask = new TaskEntity(
                 null,
@@ -43,6 +41,7 @@ public class TaskService {
                 Status.CREATED,
                 task.createDateTime(),
                 task.deadlineDate(),
+                null,
                 task.priority()
         );
         TaskEntity savedTask = taskRepository.save(newTask);
@@ -55,6 +54,9 @@ public class TaskService {
         if (task.getStatus() == Status.DONE) {
             throw new IllegalStateException("Cannot modify task: status is " + task.getStatus());
         }
+        if (!taskToUpdate.deadlineDate().isAfter(taskToUpdate.createDateTime().toLocalDate())) {
+            throw new IllegalArgumentException("Deadline date should be after create date");
+        }
         TaskEntity updatedTask = new TaskEntity(
                 task.getId(),
                 taskToUpdate.creatorId(),
@@ -62,6 +64,7 @@ public class TaskService {
                 task.getStatus(),
                 taskToUpdate.createDateTime(),
                 taskToUpdate.deadlineDate(),
+                taskToUpdate.doneDateTime(),
                 taskToUpdate.priority()
         );
         TaskEntity savedTask = taskRepository.save(updatedTask);
@@ -78,9 +81,6 @@ public class TaskService {
     public Task startTask(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found task with id = " + id));
-        if (taskEntity.getAssignedUserId() == null) {
-            throw new IllegalStateException("Cannot start task: assigned user id is null");
-        }
         if (taskEntity.getStatus() != Status.CREATED) {
             throw new IllegalStateException("Cannot start task: status is " + taskEntity.getStatus());
         }
@@ -90,7 +90,20 @@ public class TaskService {
             throw new IllegalStateException("Cannot start more than 4 tasks. Task count is " + countInProgress);
         }
         taskEntity.setStatus(Status.IN_PROGRESS);
+        taskEntity.setDoneDateTime(null);
         taskRepository.save(taskEntity);
+        return toDomainTask(taskEntity);
+    }
+
+    @Transactional
+    public Task completeTask(Long id) {
+        TaskEntity taskEntity = taskRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Not found task with id = " + id));
+        if (taskEntity.getAssignedUserId() == null) {
+            throw new IllegalArgumentException("Cannot complete task: assigned user id is null");
+        }
+        taskEntity.setDoneDateTime(LocalDateTime.now());
+        taskEntity.setStatus(Status.DONE);
         return toDomainTask(taskEntity);
     }
 
@@ -102,6 +115,7 @@ public class TaskService {
                 taskEntity.getStatus(),
                 taskEntity.getCreateDateTime(),
                 taskEntity.getDeadlineDate(),
+                taskEntity.getDoneDateTime(),
                 taskEntity.getPriority()
         );
     }
