@@ -1,7 +1,5 @@
-package com.arias.task_management_system.entity;
+package com.arias.task_management_system.tasks;
 
-import com.arias.task_management_system.Priority;
-import com.arias.task_management_system.Status;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -24,7 +22,7 @@ public class TaskEntity {
 
     @Column(name = "status")
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private TaskStatus status;
 
     @Column(name = "create_date_time", nullable = false)
     private LocalDateTime createDateTime;
@@ -37,7 +35,7 @@ public class TaskEntity {
 
     @Column(name = "priority", nullable = false)
     @Enumerated(EnumType.STRING)
-    private Priority priority;
+    private TaskPriority priority;
 
     public TaskEntity() {}
 
@@ -45,11 +43,11 @@ public class TaskEntity {
             Long id,
             Long creatorId,
             Long assignedUserId,
-            Status status,
+            TaskStatus status,
             LocalDateTime createDateTime,
             LocalDate deadlineDate,
             LocalDateTime doneDateTime,
-            Priority priority
+            TaskPriority priority
     ) {
         this.id = id;
         this.creatorId = creatorId;
@@ -85,12 +83,12 @@ public class TaskEntity {
         this.assignedUserId = assignedUserId;
     }
 
-    public Status getStatus() {
+    public TaskStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
-        this.status = status;
+    public void setStatus(TaskStatus taskStatus) {
+        this.status = taskStatus;
     }
 
     public LocalDateTime getCreateDateTime() {
@@ -109,12 +107,12 @@ public class TaskEntity {
         this.deadlineDate = deadlineDate;
     }
 
-    public Priority getPriority() {
+    public TaskPriority getPriority() {
         return priority;
     }
 
-    public void setPriority(Priority priority) {
-        this.priority = priority;
+    public void setPriority(TaskPriority taskPriority) {
+        this.priority = taskPriority;
     }
 
     public LocalDateTime getDoneDateTime() {

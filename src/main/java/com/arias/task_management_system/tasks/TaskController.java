@@ -1,7 +1,5 @@
-package com.arias.task_management_system.controller;
+package com.arias.task_management_system.tasks;
 
-import com.arias.task_management_system.Task;
-import com.arias.task_management_system.service.TaskService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -76,5 +74,19 @@ public class TaskController {
         Task task = taskService.completeTask(id);
         log.info("Ending method completeTask");
         return ResponseEntity.status(HttpStatus.OK).body(task);
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<Task>> getAllTasksByFilter(
+            @RequestParam(name = "creatorId", required = false) Long creatorId,
+            @RequestParam(name = "assignedUserId", required = false) Long assignedUserId,
+            @RequestParam(name = "status", required = false) TaskStatus status,
+            @RequestParam(name = "priority", required = false) TaskPriority priority,
+            @RequestParam(name = "pageSize", required = false) Integer pageSize,
+            @RequestParam(name = "pageNumber", required = false) Integer pageNumber
+    ) {
+        log.info("Called method getAllTasksByFilter");
+        TaskSearchFilter filter = new TaskSearchFilter(creatorId, assignedUserId, status, priority, pageSize, pageNumber);
+        return ResponseEntity.ok(taskService.searchAllByFilter(filter));
     }
 }
