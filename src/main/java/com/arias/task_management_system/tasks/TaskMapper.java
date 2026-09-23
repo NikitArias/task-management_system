@@ -1,0 +1,32 @@
+package com.arias.task_management_system.tasks;
+
+import org.springframework.stereotype.Component;
+
+@Component
+public class TaskMapper {
+    public Task toDomain(TaskEntity taskEntity) {
+        return new Task(
+                taskEntity.getId(),
+                taskEntity.getCreatorId(),
+                taskEntity.getAssignedUserId(),
+                taskEntity.getStatus(),
+                taskEntity.getCreateDateTime(),
+                taskEntity.getDeadlineDate(),
+                taskEntity.getDoneDateTime(),
+                taskEntity.getPriority()
+        );
+    }
+
+    public TaskEntity toEntity(Task task) {
+        return new TaskEntity(
+                task.id(),
+                task.creatorId(),
+                task.assignedUserId(),
+                task.status(),
+                task.createDateTime(),
+                task.deadlineDate(),
+                task.doneDateTime(),
+                task.priority()
+        );
+    }
+}

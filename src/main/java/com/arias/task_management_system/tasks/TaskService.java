@@ -1,10 +1,7 @@
-package com.arias.task_management_system.service;
+package com.arias.task_management_system.tasks;
 
-import com.arias.task_management_system.Status;
-import com.arias.task_management_system.Task;
-import com.arias.task_management_system.entity.TaskEntity;
-import com.arias.task_management_system.repository.TaskRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,61 +11,53 @@ import java.util.*;
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
+    private final TaskMapper mapper;
 
-    public TaskService(TaskRepository taskRepository) {
+    public TaskService(TaskRepository taskRepository, TaskMapper mapper) {
         this.taskRepository = taskRepository;
+        this.mapper = mapper;
     }
 
     public Task getTaskById(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found task with id = " + id));
-        return toDomainTask(taskEntity);
+        return mapper.toDomain(taskEntity);
     }
 
     public List<Task> getAllTasks() {
         List<TaskEntity> taskEntities = taskRepository.findAll();
-        return taskEntities.stream().map(this::toDomainTask).toList();
+        return taskEntities.stream().map(mapper::toDomain).toList();
     }
 
     public Task createTask(Task task) {
+        if (task.status() != null) {
+            throw new IllegalArgumentException("Status should be empty");
+        }
         if (!task.deadlineDate().isAfter(task.createDateTime().toLocalDate())) {
             throw new IllegalArgumentException("Deadline date should be after create date");
         }
-        TaskEntity newTask = new TaskEntity(
-                null,
-                task.creatorId(),
-                task.assignedUserId(),
-                Status.CREATED,
-                task.createDateTime(),
-                task.deadlineDate(),
-                null,
-                task.priority()
-        );
+        TaskEntity newTask = mapper.toEntity(task);
+        newTask.setStatus(TaskStatus.CREATED);
+
         TaskEntity savedTask = taskRepository.save(newTask);
-        return toDomainTask(savedTask);
+        return mapper.toDomain(savedTask);
     }
 
     public Task updateTask(Long id, Task taskToUpdate) {
         TaskEntity task = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found task with id = " + id));
-        if (task.getStatus() == Status.DONE) {
+        if (task.getStatus() == TaskStatus.DONE) {
             throw new IllegalStateException("Cannot modify task: status is " + task.getStatus());
         }
         if (!taskToUpdate.deadlineDate().isAfter(taskToUpdate.createDateTime().toLocalDate())) {
             throw new IllegalArgumentException("Deadline date should be after create date");
         }
-        TaskEntity updatedTask = new TaskEntity(
-                task.getId(),
-                taskToUpdate.creatorId(),
-                taskToUpdate.assignedUserId(),
-                task.getStatus(),
-                taskToUpdate.createDateTime(),
-                taskToUpdate.deadlineDate(),
-                taskToUpdate.doneDateTime(),
-                taskToUpdate.priority()
-        );
+        TaskEntity updatedTask = mapper.toEntity(taskToUpdate);
+        updatedTask.setId(task.getId());
+        updatedTask.setStatus(task.getStatus());
+
         TaskEntity savedTask = taskRepository.save(updatedTask);
-        return toDomainTask(savedTask);
+        return mapper.toDomain(savedTask);
     }
 
     public void deleteTask(Long id) {
@@ -81,18 +70,18 @@ public class TaskService {
     public Task startTask(Long id) {
         TaskEntity taskEntity = taskRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Not found task with id = " + id));
-        if (taskEntity.getStatus() != Status.CREATED) {
+        if (taskEntity.getStatus() != TaskStatus.CREATED) {
             throw new IllegalStateException("Cannot start task: status is " + taskEntity.getStatus());
         }
         Long countInProgress = taskRepository
-                .countByAssignedUserIdAndStatus(taskEntity.getAssignedUserId(), Status.IN_PROGRESS);
+                .countByAssignedUserIdAndStatus(taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS);
         if (countInProgress >= 4) {
             throw new IllegalStateException("Cannot start more than 4 tasks. Task count is " + countInProgress);
         }
-        taskEntity.setStatus(Status.IN_PROGRESS);
+        taskEntity.setStatus(TaskStatus.IN_PROGRESS);
         taskEntity.setDoneDateTime(null);
         taskRepository.save(taskEntity);
-        return toDomainTask(taskEntity);
+        return mapper.toDomain(taskEntity);
     }
 
     @Transactional
@@ -103,20 +92,18 @@ public class TaskService {
             throw new IllegalArgumentException("Cannot complete task: assigned user id is null");
         }
         taskEntity.setDoneDateTime(LocalDateTime.now());
-        taskEntity.setStatus(Status.DONE);
-        return toDomainTask(taskEntity);
+        taskEntity.setStatus(TaskStatus.DONE);
+        return mapper.toDomain(taskEntity);
     }
 
-    private Task toDomainTask(TaskEntity taskEntity) {
-        return new Task(
-                taskEntity.getId(),
-                taskEntity.getCreatorId(),
-                taskEntity.getAssignedUserId(),
-                taskEntity.getStatus(),
-                taskEntity.getCreateDateTime(),
-                taskEntity.getDeadlineDate(),
-                taskEntity.getDoneDateTime(),
-                taskEntity.getPriority()
-        );
+    public List<Task> searchAllByFilter(TaskSearchFilter filter) {
+        int pageSize = filter.pageSize() != null ? filter.pageSize() : 10;
+        int pageNumber = filter.pageNumber() != null ? filter.pageNumber() : 0;
+        Pageable pageable = Pageable.ofSize(pageSize).withPage(pageNumber);
+
+        List<TaskEntity> allTasks = taskRepository.searchAllByFilter(
+                filter.creatorId(), filter.assignedUserId(), filter.status(), filter.priority(), pageable
+                );
+        return allTasks.stream().map(mapper::toDomain).toList();
     }
 }

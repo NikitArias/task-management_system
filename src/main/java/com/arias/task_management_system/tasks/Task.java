@@ -1,4 +1,4 @@
-package com.arias.task_management_system;
+package com.arias.task_management_system.tasks;
 
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
@@ -15,8 +15,7 @@ public record Task(
         Long creatorId,
         @NotNull
         Long assignedUserId,
-        @Null
-        Status status,
+        TaskStatus status,
         @NotNull
         @FutureOrPresent
         LocalDateTime createDateTime,
@@ -25,5 +24,5 @@ public record Task(
         LocalDate deadlineDate,
         LocalDateTime doneDateTime,
         @NotNull
-        Priority priority
+        TaskPriority priority
 ) {}
