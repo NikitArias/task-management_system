@@ -75,7 +75,7 @@ public class TaskService {
         }
         Long countInProgress = taskRepository
                 .countByAssignedUserIdAndStatus(taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS);
-        if (countInProgress >= 4) {
+        if (countInProgress >= 5) {
             throw new IllegalStateException("Cannot start more than 4 tasks. Task count is " + countInProgress);
         }
         taskEntity.setStatus(TaskStatus.IN_PROGRESS);
@@ -91,6 +91,9 @@ public class TaskService {
         if (taskEntity.getAssignedUserId() == null) {
             throw new IllegalArgumentException("Cannot complete task: assigned user id is null");
         }
+        if (taskEntity.getStatus() != TaskStatus.IN_PROGRESS) {
+            throw new IllegalStateException("Cannot complete task: status is " + taskEntity.getStatus());
+        }
         taskEntity.setDoneDateTime(LocalDateTime.now());
         taskEntity.setStatus(TaskStatus.DONE);
         return mapper.toDomain(taskEntity);
@@ -99,6 +102,12 @@ public class TaskService {
     public List<Task> searchAllByFilter(TaskSearchFilter filter) {
         int pageSize = filter.pageSize() != null ? filter.pageSize() : 10;
         int pageNumber = filter.pageNumber() != null ? filter.pageNumber() : 0;
+        if (pageSize < 1 || pageSize > 100) {
+            throw new IllegalArgumentException("Page size should be between 1 and 100");
+        }
+        if (pageNumber < 0) {
+            throw new IllegalArgumentException("Page number cannot be negative");
+        }
         Pageable pageable = Pageable.ofSize(pageSize).withPage(pageNumber);
 
         List<TaskEntity> allTasks = taskRepository.searchAllByFilter(
