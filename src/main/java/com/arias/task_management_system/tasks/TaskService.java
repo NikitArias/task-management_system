@@ -76,7 +76,7 @@ public class TaskService {
         Long countInProgress = taskRepository
                 .countByAssignedUserIdAndStatus(taskEntity.getAssignedUserId(), TaskStatus.IN_PROGRESS);
         if (countInProgress >= 5) {
-            throw new IllegalStateException("Cannot start more than 4 tasks. Task count is " + countInProgress);
+            throw new IllegalStateException("Cannot start more than 5 tasks. Task count is " + countInProgress);
         }
         taskEntity.setStatus(TaskStatus.IN_PROGRESS);
         taskEntity.setDoneDateTime(null);
