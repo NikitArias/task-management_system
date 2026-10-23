@@ -4,8 +4,8 @@ REST API для управления задачами. Приложение по
 
 ## Технологический стек
 
-- **Java 21**
-- **Spring Boot**
+- Java 21
+- Spring Boot
 - Spring Web MVC
 - Spring Data JPA, Hibernate
 - PostgreSQL
@@ -46,7 +46,9 @@ REST API для управления задачами. Приложение по
 
 ### 1. Клонирование репозитория
 
-```bash
+Откройте PowerShell и выполните команды:
+
+```powershell
 git clone https://github.com/NikitArias/task-management_system.git
 cd task-management_system
 ```
@@ -59,34 +61,76 @@ cd task-management_system
 DB_PASSWORD=root
 ```
 
-При необходимости замените значение на собственный пароль.
+`root` — пример пароля. При необходимости замените его на собственный.
 
-Запустите PostgreSQL командой:
+Запустите PostgreSQL с помощью Docker Compose:
 
-```bash
+```powershell
 docker compose up -d
 ```
 
-### 3. Запуск приложения
+### 3. Настройка подключения к базе данных
 
-Откройте проект в IntelliJ IDEA и настройте переменные окружения для подключения к базе данных:
+В том же окне PowerShell выполните команды:
 
-- `DB_URL` — `jdbc:postgresql://localhost:5433/postgres`
-- `DB_USERNAME` — `postgres`
-- `DB_PASSWORD` — пароль, указанный в `.env`
+```powershell
+$env:DB_URL = "jdbc:postgresql://localhost:5433/postgres"
+$env:DB_USERNAME = "postgres"
+$env:DB_PASSWORD = "root"
+```
 
-Запустите приложение через главный класс Spring Boot.
+Если вы указали другой пароль в `.env`, используйте его вместо `root`.
 
-После запуска API будет доступно по адресу `http://localhost:8080`.
+### 4. Запуск приложения
+
+Из корневой папки проекта выполните:
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Дождитесь сообщения об успешном запуске Spring Boot.
+
+После запуска API будет доступно по адресу:
+
+`http://localhost:8080`
+
+Например, для получения списка задач отправьте GET-запрос на `http://localhost:8080/tasks`.
+
+Также приложение можно запустить через главный класс Spring Boot в IntelliJ IDEA. Для этого укажите в конфигурации запуска те же переменные окружения: `DB_URL`, `DB_USERNAME` и `DB_PASSWORD`.
 
 ## Тестирование
 
-Для запуска тестов выполните в Windows PowerShell:
+Для запуска тестов выполните в PowerShell из корневой папки проекта:
 
 ```powershell
 .\mvnw.cmd test
 ```
 
+Для полной проверки проекта, включая очистку предыдущих результатов сборки, компиляцию и тесты, выполните:
+
+```powershell
+.\mvnw.cmd clean verify
+```
+
+Для запуска тестов, проверяющих загрузку Spring-контекста, PostgreSQL должен быть доступен, а переменные окружения подключения к базе данных — настроены.
+
 ## Использование
 
 Для отправки HTTP-запросов к API используйте Postman или другой HTTP-клиент.
+
+## Остановка
+
+Чтобы остановить приложение, нажмите `Ctrl+C` в окне PowerShell, в котором оно запущено.
+
+Чтобы остановить контейнер PostgreSQL, выполните из корневой папки проекта:
+
+```powershell
+docker compose stop
+```
+
+Для повторного запуска контейнера используйте:
+
+```powershell
+docker compose start
+```
